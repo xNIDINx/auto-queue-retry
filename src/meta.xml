@@ -1,0 +1,6 @@
+<root>
+    <id>local.auto_queue_retry</id>
+    <version>1.3.0</version>
+    <name>Auto Queue Retry</name>
+    <description>Automatic random-battle queue retries with configurable timeout, delay, hotkey and restart limit through ModsSettingsAPI.</description>
+</root>
