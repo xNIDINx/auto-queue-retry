@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Automatically retries the solo random-battle queue.
+"""Grand Battle search helper by nidin, using random-queue retries.
 
 The configured hotkey (F8 by default) starts the cycle for the vehicle
 currently selected in the hangar.
@@ -8,6 +8,9 @@ If the visible waiting timer reaches the configured number of seconds, the mod l
 the queue, waits for the dequeue confirmation, and enters it again.
 Press the hotkey again to stop the cycle and leave the queue immediately.
 """
+
+__author__ = 'nidin'
+__version__ = '1.3.1'
 
 import BigWorld
 import Keys
@@ -21,7 +24,8 @@ from gui.prb_control.settings import CTRL_ENTITY_TYPE
 
 
 DEFAULT_HOTKEY = [Keys.KEY_F8]
-MOD_LINKAGE = 'local.auto_queue_retry'
+MOD_LINKAGE = 'nidin.auto_queue_retry'
+LEGACY_MOD_LINKAGE = 'local.auto_queue_retry'
 DEFAULT_VISIBLE_TIMEOUT = 15
 MIN_VISIBLE_TIMEOUT = 5
 MAX_VISIBLE_TIMEOUT = 60
@@ -33,7 +37,7 @@ DEFAULT_MAX_RESTARTS = 20
 MIN_MAX_RESTARTS = 5
 MAX_MAX_RESTARTS = 100
 RESTARTS_STEP = 5
-SETTINGS_VERSION = 4
+SETTINGS_VERSION = 5
 # onEnqueued arrives roughly two seconds before the visible waiting timer
 # starts, so the internal callback includes QUEUE_TIMER_OFFSET.
 
@@ -54,7 +58,7 @@ _modsSettingsApi = None
 
 
 def _log(message):
-    print '[auto_queue_retry] %s' % message
+    print '[nidin.auto_queue_retry] %s' % message
 
 
 def _notify(message, messageType=None):
@@ -162,11 +166,11 @@ def _enterQueue():
 
     dispatcher, entity = _getRandomQueueEntity()
     if dispatcher is None:
-        _stop(u'Автопоиск остановлен: диспетчер боёв ещё не готов.',
+        _stop(u'Поиск ГС остановлен: диспетчер боёв ещё не готов.',
               messageType=SystemMessages.SM_TYPE.Warning)
         return
     if entity is None:
-        _stop(u'Автопоиск работает только в одиночном случайном бою.',
+        _stop(u'Поиск ГС работает только в одиночном случайном бою.',
               messageType=SystemMessages.SM_TYPE.Warning)
         return
     if entity.isInQueue():
@@ -177,7 +181,7 @@ def _enterQueue():
     _log('entering random queue, attempt %d, vehicle invID=%s' % (
         _attempt, g_currentVehicle.invID))
     if not dispatcher.doAction():
-        _stop(u'Автопоиск остановлен: кнопка «В бой» сейчас недоступна.',
+        _stop(u'Поиск ГС остановлен: кнопка «В бой» сейчас недоступна.',
               messageType=SystemMessages.SM_TYPE.Warning)
 
 
@@ -189,7 +193,7 @@ def _onQueueTimeout():
 
     _, entity = _getRandomQueueEntity()
     if entity is None:
-        _stop(u'Автопоиск остановлен: режим очереди изменился.',
+        _stop(u'Поиск ГС остановлен: режим очереди изменился.',
               messageType=SystemMessages.SM_TYPE.Warning)
         return
     if not entity.isInQueue():
@@ -227,42 +231,42 @@ def _onDequeued(queueType, *args):
 
 def _onArenaCreated(*args):
     if _active:
-        _stop(u'Бой найден. Автопоиск завершён.')
+        _stop(u'Бой найден. Поиск ГС завершён.')
 
 
 def _onEnqueueFailure(queueType, errorCode, *args):
     if _active and queueType == QUEUE_TYPE.RANDOMS:
-        _stop(u'Автопоиск остановлен: сервер отклонил вход в очередь.',
+        _stop(u'Поиск ГС остановлен: сервер отклонил вход в очередь.',
               messageType=SystemMessages.SM_TYPE.Error)
 
 
 def _onKickedFromQueue(queueType, reasonCode=None, *args):
     if _active and queueType == QUEUE_TYPE.RANDOMS:
-        _stop(u'Автопоиск остановлен: сервер исключил игрока из очереди.',
+        _stop(u'Поиск ГС остановлен: сервер исключил игрока из очереди.',
               messageType=SystemMessages.SM_TYPE.Error)
 
 
 def _start():
     global _active, _attempt, _restarts
     if not _isEnabled():
-        _notify(u'Автопоиск отключён в настройках модификаций.',
+        _notify(u'Поиск ГС отключён в настройках модификаций.',
                 SystemMessages.SM_TYPE.Warning)
         return
     if not g_currentVehicle.isPresent() or not g_currentVehicle.invID:
-        _notify(u'Автопоиск: сначала выберите исправный танк в ангаре.',
+        _notify(u'Поиск ГС: сначала выберите исправный танк в ангаре.',
                 SystemMessages.SM_TYPE.Warning)
         return
 
     dispatcher, entity = _getRandomQueueEntity()
     if dispatcher is None or entity is None:
-        _notify(u'Автопоиск работает только в одиночном случайном бою.',
+        _notify(u'Поиск ГС работает только в одиночном случайном бою.',
                 SystemMessages.SM_TYPE.Warning)
         return
 
     _active = True
     _attempt = 0
     _restarts = 0
-    _notify(u'Автопоиск запущен. Повторное нажатие горячей клавиши — отмена. '
+    _notify(u'Поиск ГС запущен. Повторное нажатие горячей клавиши — отмена. '
             u'Выход на %d-й секунде таймера, лимит — %d перезапусков.' % (
                 _visibleTimeout(), _maxRestarts()))
     _log('started')
@@ -275,7 +279,7 @@ def _handleKeyDown(event):
         return
     _hotkeyHeld = True
     if _active:
-        _stop(u'Автопоиск отменён горячей клавишей.', leaveQueue=True)
+        _stop(u'Поиск ГС отменён горячей клавишей.', leaveQueue=True)
     else:
         _start()
 
@@ -298,14 +302,14 @@ def _onModSettingsChanged(linkage, newSettings):
          'requeue delay=%.1f seconds, max restarts=%d' % (
              _isEnabled(), _visibleTimeout(), _requeueDelay(), _maxRestarts()))
     if _active and not _isEnabled():
-        _stop(u'Автопоиск отключён в настройках модификаций.',
+        _stop(u'Поиск ГС отключён в настройках модификаций.',
               leaveQueue=True)
 
 
 def _registerSettings():
     global _settings, _modsSettingsApi
     template = {
-        'modDisplayName': u'Автопоиск боя',
+        'modDisplayName': u'Поиск генерального сражения (nidin)',
         'settingsVersion': SETTINGS_VERSION,
         'enabled': True,
         'column1': [
@@ -360,30 +364,45 @@ def _registerSettings():
                 'varName': 'maxRestarts',
             },
         ],
-        'column2': [],
+        'column2': [
+            {'type': 'Label', 'text': u'Автор: nidin'},
+            {'type': 'Label',
+             'text': u'Включите «Генеральное сражение» в настройках игры.'},
+        ],
     }
     try:
         from gui.modsSettingsApi import g_modsSettingsApi
         _modsSettingsApi = g_modsSettingsApi
-        previousSettings = g_modsSettingsApi.getModSettings(
-            MOD_LINKAGE, {'settingsVersion': SETTINGS_VERSION - 1})
         savedSettings = g_modsSettingsApi.getModSettings(
             MOD_LINKAGE, template)
-        if savedSettings:
+        if savedSettings is not None:
             _settings = dict(savedSettings)
             g_modsSettingsApi.registerCallback(
                 MOD_LINKAGE, _onModSettingsChanged)
         else:
+            # Reading getModSettings for the legacy ID would activate its old
+            # menu row. Read a snapshot instead; API 1.7.0 removes inactive
+            # templates when the settings window opens.
+            storedSettings = getattr(g_modsSettingsApi, 'state', {}).get(
+                'settings', {})
+            previousSettings = storedSettings.get(MOD_LINKAGE)
+            if previousSettings is None:
+                previousSettings = storedSettings.get(LEGACY_MOD_LINKAGE)
+            previousSettings = dict(previousSettings or {})
             registeredSettings = g_modsSettingsApi.setModTemplate(
                 MOD_LINKAGE, template, _onModSettingsChanged)
-            if registeredSettings:
-                _settings = dict(registeredSettings)
+            if registeredSettings is None:
+                raise RuntimeError('ModsSettingsAPI template registration failed')
+            _settings = dict(registeredSettings)
             if previousSettings:
-                for key in ('enabled', 'visibleTimeout', 'requeueDelay', 'hotkey'):
+                for key in ('enabled', 'visibleTimeout', 'requeueDelay',
+                            'hotkey', 'maxRestarts'):
                     if key in previousSettings:
                         _settings[key] = previousSettings[key]
                 g_modsSettingsApi.updateModSettings(
                     MOD_LINKAGE, dict(_settings))
+                g_modsSettingsApi.saveState()
+                _log('previous settings migrated to nidin identifier')
         _settings['visibleTimeout'] = _visibleTimeout()
         _settings['requeueDelay'] = _requeueDelay()
         _settings['maxRestarts'] = _maxRestarts()
