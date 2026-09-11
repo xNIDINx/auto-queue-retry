@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Grand Battle search helper by nidin, using random-queue retries.
+"""Grand Battle search helper using random-queue retries.
 
 The configured hotkey (F8 by default) starts the cycle for the vehicle
 currently selected in the hangar.
@@ -10,7 +10,7 @@ Press the hotkey again to stop the cycle and leave the queue immediately.
 """
 
 __author__ = 'nidin'
-__version__ = '1.3.1'
+__version__ = '1.3.2'
 
 import BigWorld
 import Keys
@@ -37,7 +37,7 @@ DEFAULT_MAX_RESTARTS = 20
 MIN_MAX_RESTARTS = 5
 MAX_MAX_RESTARTS = 100
 RESTARTS_STEP = 5
-SETTINGS_VERSION = 5
+SETTINGS_VERSION = 6
 # onEnqueued arrives roughly two seconds before the visible waiting timer
 # starts, so the internal callback includes QUEUE_TIMER_OFFSET.
 
@@ -365,7 +365,6 @@ def _registerSettings():
             },
         ],
         'column2': [
-            {'type': 'Label', 'text': u'Автор: nidin'},
             {'type': 'Label',
              'text': u'Включите «Генеральное сражение» в настройках игры.'},
         ],
